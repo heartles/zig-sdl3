@@ -53,7 +53,6 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     const emsdk_dep = b.dependency("emsdk", .{});
     const emsdk_sysroot_path = emsdk_dep.path("upstream/emscripten/cache/sysroot");
     const emsdk_sysroot_include_path = emsdk_dep.path("upstream/emscripten/cache/sysroot/include");
-    // sdl3.artifact("SDL3").addSystemIncludePath(emsdk_sysroot_include_path);
 
     const sdl3 = b.dependency("sdl3", .{
         .target = target,
@@ -69,10 +68,6 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     const sdl_module = sdl3.module("sdl3");
     sdl_module.addSystemIncludePath(emsdk_sysroot_include_path);
     wasm.root_module.addImport("sdl3", sdl3.module("sdl3"));
-
-    // const sysroot_include = b.pathJoin(&.{ b.sysroot.?, "include" });
-    // var dir = std.fs.openDirAbsolute(sysroot_include, .{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
-    // dir.close();
     wasm.addSystemIncludePath(emsdk_sysroot_include_path);
 
     const emcc_flags = zemscripten.emccDefaultFlags(b.allocator, .{
@@ -103,8 +98,6 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
 
     b.getInstallStep().dependOn(emcc_step);
 
-    var run_emrun_step = b.step("emrun", "Run the WebAssembly app using emrun");
-
     const base_name = if (wasm.name_only_filename) |n| n else wasm.name;
 
     // Create filename with extension
@@ -125,16 +118,14 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     const emrun_cmd = b.addSystemCommand(&.{
         emrun_path.getPath(b),
         "--port",
-        "8080",
+        b.fmt("{d}", .{b.option(u16, "port", "Port to run the webapp on (default: 8080)") orelse 8080}),
         html_path,
     });
 
     emrun_cmd.step.dependOn(b.getInstallStep());
 
-    run_emrun_step.dependOn(&emrun_cmd.step);
-
     const run_step = b.step("run", "Run the app (via emrun)");
-    run_step.dependOn(run_emrun_step);
+    run_step.dependOn(&emrun_cmd.step);
 
     if (b.args) |args| {
         emrun_cmd.addArgs(args);
