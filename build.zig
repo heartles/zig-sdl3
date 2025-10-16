@@ -58,6 +58,20 @@ pub fn build(b: *std.Build) !void {
         "c_sdl_install_build_config_h",
         "Additionally install 'SDL_build_config.h' when installing SDL (default: false)",
     ) orelse false;
+    const sdl_system_include_path = b.option(
+        std.Build.LazyPath,
+        "sdl_system_include_path",
+        "System include path for SDL",
+    );
+    const sdl_sysroot_path = b.option(
+        std.Build.LazyPath,
+        "sdl_sysroot_path",
+        "System include path for SDL",
+    );
+
+    if (sdl_sysroot_path) |val| {
+        b.sysroot = val.getPath(b);
+    }
 
     const sdl_dep = b.dependency("sdl", .{
         .target = target,
@@ -71,6 +85,8 @@ pub fn build(b: *std.Build) !void {
     });
 
     const sdl_dep_lib = sdl_dep.artifact("SDL3");
+    if (sdl_system_include_path) |val|
+        sdl_dep_lib.addSystemIncludePath(val);
 
     // SDL options.
     const options = b.addOptions();
@@ -131,6 +147,8 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
     translate_c.addIncludePath(sdl_dep.path("include"));
+    if (sdl_system_include_path) |val|
+        translate_c.addSystemIncludePath(val);
 
     const c_module = translate_c.createModule();
 
@@ -143,6 +161,9 @@ pub fn build(b: *std.Build) !void {
         },
     });
 
+    if (sdl_system_include_path) |val|
+        sdl3.addSystemIncludePath(val);
+
     const example_options = ExampleOptions{
         .ext_image = ext_image,
         .ext_net = ext_net,
@@ -152,23 +173,24 @@ pub fn build(b: *std.Build) !void {
     sdl3.addOptions("extension_options", extension_options);
     sdl3.addOptions("options", options);
     sdl3.linkLibrary(sdl_dep_lib);
+
     if (ext_image) {
         image.setup(b, sdl3, translate_c, sdl_dep_lib, c_sdl_preferred_linkage, .{
             .optimize = optimize,
             .target = target,
-        });
+        }, sdl_system_include_path);
     }
     if (ext_net) {
         net.setup(b, sdl3, translate_c, sdl_dep_lib, c_sdl_preferred_linkage, .{
             .optimize = optimize,
             .target = target,
-        });
+        }, sdl_system_include_path);
     }
     if (ext_ttf) {
         ttf.setup(b, sdl3, translate_c, sdl_dep_lib, c_sdl_preferred_linkage, .{
             .optimize = optimize,
             .target = target,
-        });
+        }, sdl_system_include_path);
     }
 
     _ = setupDocs(b, sdl3);
