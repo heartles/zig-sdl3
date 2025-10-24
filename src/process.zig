@@ -79,7 +79,7 @@ pub const Process = packed struct {
         /// Convert to properties.
         pub fn toProperties(self: CreateProperties) !properties.Group {
             const ret = try properties.Group.init();
-            try ret.set(c.SDL_PROP_PROCESS_CREATE_ARGS_POINTER, .{ .pointer = @constCast(@ptrCast(self.args.ptr)) });
+            try ret.set(c.SDL_PROP_PROCESS_CREATE_ARGS_POINTER, .{ .pointer = @ptrCast(@constCast(self.args.ptr)) });
             if (self.environment) |val|
                 try ret.set(c.SDL_PROP_PROCESS_CREATE_ENVIRONMENT_POINTER, .{ .pointer = val.value });
             if (self.stdin) |val|
@@ -122,9 +122,9 @@ pub const Process = packed struct {
         pub fn fromSdl(value: properties.Group) Properties {
             return .{
                 .pid = if (value.get(c.SDL_PROP_PROCESS_PID_NUMBER)) |val| val.number else null,
-                .stdin = if (value.get(c.SDL_PROP_PROCESS_STDIN_POINTER)) |val| @alignCast(@ptrCast(val.pointer)) else null,
-                .stdout = if (value.get(c.SDL_PROP_PROCESS_STDOUT_POINTER)) |val| @alignCast(@ptrCast(val.pointer)) else null,
-                .stderr = if (value.get(c.SDL_PROP_PROCESS_STDERR_POINTER)) |val| @alignCast(@ptrCast(val.pointer)) else null,
+                .stdin = if (value.get(c.SDL_PROP_PROCESS_STDIN_POINTER)) |val| @ptrCast(@alignCast(val.pointer)) else null,
+                .stdout = if (value.get(c.SDL_PROP_PROCESS_STDOUT_POINTER)) |val| @ptrCast(@alignCast(val.pointer)) else null,
+                .stderr = if (value.get(c.SDL_PROP_PROCESS_STDERR_POINTER)) |val| @ptrCast(@alignCast(val.pointer)) else null,
                 .background = if (value.get(c.SDL_PROP_PROCESS_BACKGROUND_BOOLEAN)) |val| val.boolean else null,
             };
         }
@@ -326,13 +326,13 @@ pub const Process = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn read(
         self: Process,
-    ) !struct { data: []u8, exit_code: c_int } {
+    ) !struct { []u8, c_int } {
         var size: usize = undefined;
         var exit_code: c_int = undefined;
         const ret = c.SDL_ReadProcess(self.value, &size, &exit_code);
         return .{
-            .data = @as([*]u8, @alignCast(@ptrCast(try errors.wrapCallNull(*anyopaque, ret))))[0..@intCast(size)],
-            .exit_code = exit_code,
+            @as([*]u8, @ptrCast(@alignCast(try errors.wrapCallNull(*anyopaque, ret))))[0..@intCast(size)],
+            exit_code,
         };
     }
 

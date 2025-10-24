@@ -41,19 +41,19 @@ pub const Animation = struct {
     /// * `index`: The index of the frame.
     ///
     /// ## Return Value
-    /// Returns the animation frame surface and delay, or `null` if out of bounds.
+    /// Returns the animation frame surface and delay in that order, or `null` if out of bounds.
     ///
     /// ## Version
     /// This function is provided by zig-sdl3.
     pub fn getFrame(
         self: Animation,
         index: usize,
-    ) ?struct { frame: surface.Surface, delay: usize } {
+    ) ?struct { surface.Surface, usize } {
         if (index >= self.getNumFrames())
             return null;
         return .{
-            .frame = .{ .value = self.value.frames[index] },
-            .delay = @intCast(self.value.delays[index]),
+            .{ .value = self.value.frames[index] },
+            @intCast(self.value.delays[index]),
         };
     }
 

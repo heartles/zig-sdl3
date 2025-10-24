@@ -831,13 +831,13 @@ pub const Gamepad = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getPowerInfo(
         self: Gamepad,
-    ) !struct { state: power.PowerState, percent: ?u7 } {
+    ) !struct { power.PowerState, ?u7 } {
         var percent: c_int = undefined;
         const ret = c.SDL_GetGamepadPowerInfo(
             self.value,
             &percent,
         );
-        return .{ .state = @enumFromInt(try errors.wrapCall(c_int, ret, c.SDL_POWERSTATE_ERROR)), .percent = if (percent == -1) null else @intCast(percent) };
+        return .{ @enumFromInt(try errors.wrapCall(c_int, ret, c.SDL_POWERSTATE_ERROR)), if (percent == -1) null else @intCast(percent) };
     }
 
     /// Get the USB product ID of an opened gamepad, if available.

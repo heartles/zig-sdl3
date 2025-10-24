@@ -994,7 +994,7 @@ pub const Font = struct {
     /// Get font target resolutions, in dots per inch.
     ///
     /// ## Return Value
-    /// Returns a struct with the horizontal and vertical DPI.
+    /// Returns a struct with the horizontal and vertical DPI in that order.
     ///
     /// ## Thread Safety
     /// This function should be called on the thread that created the font.
@@ -1003,7 +1003,7 @@ pub const Font = struct {
     /// This function is available since SDL_ttf 3.0.0.
     pub fn getDpi(
         self: Font,
-    ) !struct { hdpi: c_int, vdpi: c_int } {
+    ) !struct { c_int, c_int } {
         var hdpi: c_int = undefined;
         var vdpi: c_int = undefined;
         try errors.wrapCallBool(c.TTF_GetFontDPI(
@@ -1011,7 +1011,7 @@ pub const Font = struct {
             &hdpi,
             &vdpi,
         ));
-        return .{ .hdpi = hdpi, .vdpi = vdpi };
+        return .{ hdpi, vdpi };
     }
 
     /// Set a font's current style.
@@ -1674,7 +1674,7 @@ pub const Font = struct {
     pub fn getGlyphImage(
         self: Font,
         ch: u32,
-    ) !struct { image: surface.Surface, image_type: ImageType } {
+    ) !struct { surface.Surface, ImageType } {
         var image_type: c.TTF_ImageType = undefined;
         const surf = try errors.wrapCallNull(*c.SDL_Surface, c.TTF_GetGlyphImage(
             self.value,
@@ -1682,8 +1682,8 @@ pub const Font = struct {
             &image_type,
         ));
         return .{
-            .image = .{ .value = surf },
-            .image_type = @enumFromInt(
+            .{ .value = surf },
+            @enumFromInt(
                 image_type,
             ),
         };
@@ -1709,7 +1709,7 @@ pub const Font = struct {
     pub fn getGlyphImageForIndex(
         self: Font,
         glyph_index: u32,
-    ) !struct { image: surface.Surface, image_type: ImageType } {
+    ) !struct { surface.Surface, ImageType } {
         var image_type: c.TTF_ImageType = undefined;
         const surf = try errors.wrapCallNull(*c.SDL_Surface, c.TTF_GetGlyphImageForIndex(
             self.value,
@@ -1717,8 +1717,8 @@ pub const Font = struct {
             &image_type,
         ));
         return .{
-            .image = .{ .value = surf },
-            .image_type = @enumFromInt(
+            .{ .value = surf },
+            @enumFromInt(
                 image_type,
             ),
         };
@@ -1808,7 +1808,7 @@ pub const Font = struct {
     pub fn getStringSize(
         self: Font,
         text: []const u8,
-    ) !struct { w: c_int, h: c_int } {
+    ) !struct { c_int, c_int } {
         var w: c_int = undefined;
         var h: c_int = undefined;
         try errors.wrapCallBool(c.TTF_GetStringSize(
@@ -1818,7 +1818,7 @@ pub const Font = struct {
             &w,
             &h,
         ));
-        return .{ .w = w, .h = h };
+        return .{ w, h };
     }
 
     /// Calculate the dimensions of a rendered string of UTF-8 text.
@@ -1846,7 +1846,7 @@ pub const Font = struct {
         self: Font,
         text: []const u8,
         wrap_width: c_int,
-    ) !struct { w: c_int, h: c_int } {
+    ) !struct { c_int, c_int } {
         var w: c_int = undefined;
         var h: c_int = undefined;
         try errors.wrapCallBool(c.TTF_GetStringSizeWrapped(
@@ -1882,7 +1882,7 @@ pub const Font = struct {
         self: Font,
         text: []const u8,
         max_width: c_int,
-    ) !struct { measured_width: c_int, measured_length: usize } {
+    ) !struct { c_int, usize } {
         var measured_width: c_int = undefined;
         var measured_length: usize = undefined;
         try errors.wrapCallBool(c.TTF_MeasureString(
@@ -1893,7 +1893,7 @@ pub const Font = struct {
             &measured_width,
             &measured_length,
         ));
-        return .{ .measured_width = measured_width, .measured_length = measured_length };
+        return .{ measured_width, measured_length };
     }
 
     /// Render UTF-8 text at fast quality to a new 8-bit surface.
@@ -3274,7 +3274,7 @@ pub const Text = struct {
     /// This function is available since SDL_ttf 3.0.0.
     pub fn getPosition(
         self: Text,
-    ) !struct { x: c_int, y: c_int } {
+    ) !struct { c_int, c_int } {
         var x: c_int = undefined;
         var y: c_int = undefined;
         try errors.wrapCallBool(c.TTF_GetTextPosition(
@@ -3282,7 +3282,7 @@ pub const Text = struct {
             &x,
             &y,
         ));
-        return .{ .x = x, .y = y };
+        return .{ x, y };
     }
 
     /// Set whether wrapping is enabled on a text object.
@@ -3499,7 +3499,7 @@ pub const Text = struct {
     /// This function is available since SDL_ttf 3.0.0.
     pub fn getSize(
         self: Text,
-    ) !struct { w: c_int, h: c_int } {
+    ) !struct { c_int, c_int } {
         var w: c_int = undefined;
         var h: c_int = undefined;
         try errors.wrapCallBool(c.TTF_GetTextSize(
@@ -3507,7 +3507,7 @@ pub const Text = struct {
             &w,
             &h,
         ));
-        return .{ .w = w, .h = h };
+        return .{ w, h };
     }
 
     /// Get the substring of a text object that surrounds a text offset.

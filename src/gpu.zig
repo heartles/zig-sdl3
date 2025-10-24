@@ -594,7 +594,7 @@ pub const CommandBuffer = packed struct {
     /// * `window`: A window that has been claimed.
     ///
     /// ## Return Value
-    /// Returns the swapchain texture along with its width and height.
+    /// Returns the swapchain texture along with its width and height in that order.
     ///
     /// ## Remarks
     /// When a swapchain texture is acquired on a command buffer, it will automatically be submitted for presentation when the command buffer is submitted.
@@ -618,15 +618,15 @@ pub const CommandBuffer = packed struct {
     pub fn acquireSwapchainTexture(
         self: CommandBuffer,
         window: video.Window,
-    ) !struct { texture: ?Texture, width: u32, height: u32 } {
+    ) !struct { ?Texture, u32, u32 } {
         var width: u32 = undefined;
         var height: u32 = undefined;
         var texture: ?*c.SDL_GPUTexture = undefined;
         try errors.wrapCallBool(c.SDL_AcquireGPUSwapchainTexture(self.value, window.value, &texture, &width, &height));
         return .{
-            .texture = if (texture) |val| .{ .value = val } else null,
-            .width = width,
-            .height = height,
+            if (texture) |val| .{ .value = val } else null,
+            width,
+            height,
         };
     }
 
@@ -994,7 +994,7 @@ pub const CommandBuffer = packed struct {
     /// * `self`: A command buffer.
     ///
     /// ## Return Value
-    /// Returns the swapchain texture along with its width and height.
+    /// Returns the swapchain texture along with its width and height in that order.
     ///
     /// ## Remarks
     /// When a swapchain texture is acquired on a command buffer, it will automatically be submitted for presentation when the command buffer is submitted.
@@ -1017,15 +1017,15 @@ pub const CommandBuffer = packed struct {
     pub fn waitAndAcquireSwapchainTexture(
         self: CommandBuffer,
         window: video.Window,
-    ) !struct { texture: ?Texture, width: u32, height: u32 } {
+    ) !struct { ?Texture, u32, u32 } {
         var width: u32 = undefined;
         var height: u32 = undefined;
         var texture: ?*c.SDL_GPUTexture = undefined;
         try errors.wrapCallBool(c.SDL_WaitAndAcquireGPUSwapchainTexture(self.value, window.value, &texture, &width, &height));
         return .{
-            .texture = if (texture) |val| .{ .value = val } else null,
-            .width = width,
-            .height = height,
+            if (texture) |val| .{ .value = val } else null,
+            width,
+            height,
         };
     }
 };

@@ -216,7 +216,7 @@ pub const Time = struct {
     /// * `self`: The time to convert.
     ///
     /// ## Return Value
-    /// Returns the low and high 32-bit values of the Windows `FILETIME` structure.
+    /// Returns the low and high 32-bit values of the Windows `FILETIME` structure in that order.
     ///
     /// ## Remarks
     /// This function fills in the two 32-bit values of the `FILETIME` structure.
@@ -225,7 +225,7 @@ pub const Time = struct {
     /// This function is available since SDL 3.2.0.
     pub fn toWindows(
         self: Time,
-    ) struct { low_date_time: u32, high_date_time: u32 } {
+    ) struct { u32, u32 } {
         var low_date_time: u32 = undefined;
         var high_date_time: u32 = undefined;
         c.SDL_TimeToWindows(
@@ -233,7 +233,7 @@ pub const Time = struct {
             &low_date_time,
             &high_date_time,
         );
-        return .{ .low_date_time = low_date_time, .high_date_time = high_date_time };
+        return .{ low_date_time, high_date_time };
     }
 };
 
@@ -321,7 +321,7 @@ pub fn getDaysInMonth(
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getLocalePreferences() !struct { date_format: DateFormat, time_format: TimeFormat } {
+pub fn getLocalePreferences() !struct { DateFormat, TimeFormat } {
     var date_format: c.SDL_DateFormat = undefined;
     var time_format: c.SDL_TimeFormat = undefined;
     const ret = c.SDL_GetDateTimeLocalePreferences(
@@ -329,7 +329,7 @@ pub fn getLocalePreferences() !struct { date_format: DateFormat, time_format: Ti
         &time_format,
     );
     try errors.wrapCallBool(ret);
-    return .{ .date_format = @enumFromInt(date_format), .time_format = @enumFromInt(time_format) };
+    return .{ @enumFromInt(date_format), @enumFromInt(time_format) };
 }
 
 // Ensure time and date recognition works.
@@ -354,7 +354,7 @@ test "Dates" {
     _ = try getLocalePreferences();
 
     // Idk man idk why this is not equal, probably some weird conversion loss.
-    const windows_time = curr_time.toWindows();
-    const conv_time = Time.fromWindows(windows_time.low_date_time, windows_time.high_date_time);
+    const low_date_time, const high_date_time = curr_time.toWindows();
+    const conv_time = Time.fromWindows(low_date_time, high_date_time);
     try std.testing.expect(std.math.approxEqAbs(f64, @floatFromInt(curr_time.value), @floatFromInt(conv_time.value), 1000));
 }
