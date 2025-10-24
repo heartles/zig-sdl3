@@ -499,7 +499,7 @@ pub const Device = packed struct {
     /// * `self`: The device instance to query.
     ///
     /// ## Return Value
-    /// Returns the audio specification of the device as long as the buffer size in sample frames.
+    /// Returns the audio specification of the device as well as the buffer size in sample frames.
     ///
     /// ## Remarks
     /// For an opened device, this will report the format the device is currently using.
@@ -523,7 +523,7 @@ pub const Device = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getFormat(
         self: Device,
-    ) !struct { spec: Spec, buffer_size_frames: usize } {
+    ) !struct { Spec, usize } {
         var spec: c.SDL_AudioSpec = undefined;
         var buffer_size_frames: c_int = undefined;
         const ret = c.SDL_GetAudioDeviceFormat(
@@ -532,7 +532,7 @@ pub const Device = packed struct {
             &buffer_size_frames,
         );
         try errors.wrapCallBool(ret);
-        return .{ .spec = Spec.fromSdl(spec), .buffer_size_frames = @intCast(buffer_size_frames) };
+        return .{ Spec.fromSdl(spec), @intCast(buffer_size_frames) };
     }
 
     /// Get the current channel map of an audio device.
@@ -825,7 +825,7 @@ pub const Device = packed struct {
                 additional_amount_c: c_int,
                 total_amount_c: c_int,
             ) callconv(.c) void {
-                callback.?(@alignCast(@ptrCast(user_data_c)), .{ .value = stream_c.? }, @intCast(additional_amount_c), @intCast(total_amount_c));
+                callback.?(@ptrCast(@alignCast(user_data_c)), .{ .value = stream_c.? }, @intCast(additional_amount_c), @intCast(total_amount_c));
             }
         };
         const spec_sdl: c.SDL_AudioSpec = if (spec) |val| val.toSdl() else undefined;
@@ -985,7 +985,7 @@ pub const Device = packed struct {
     ) !void {
         const Cb = struct {
             pub fn run(user_data_c: ?*anyopaque, spec_c: [*c]const c.SDL_AudioSpec, buffer_c: [*c]f32, buffer_len_c: c_int) callconv(.c) void {
-                callback.?(@alignCast(@ptrCast(user_data_c)), Spec.fromSdl(spec_c.*), buffer_c[0..@intCast(buffer_len_c)]);
+                callback.?(@ptrCast(@alignCast(user_data_c)), Spec.fromSdl(spec_c.*), buffer_c[0..@intCast(buffer_len_c)]);
             }
         };
         return errors.wrapCallBool(c.SDL_SetAudioPostmixCallback(self.value, Cb.run orelse null, user_data));
@@ -1162,7 +1162,7 @@ pub const Stream = packed struct {
     /// * `self`: The stream to query.
     ///
     /// ## Return Value
-    /// Returns the input and output formats of the stream.
+    /// Returns the input and output formats of the stream in that order.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
@@ -1171,13 +1171,13 @@ pub const Stream = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getFormat(
         self: Stream,
-    ) !struct { input_format: Spec, output_format: Spec } {
+    ) !struct { Spec, Spec } {
         var input_format: c.SDL_AudioSpec = undefined;
         var output_format: c.SDL_AudioSpec = undefined;
         try errors.wrapCallBool(c.SDL_GetAudioStreamFormat(self.value, &input_format, &output_format));
         return .{
-            .input_format = Spec.fromSdl(input_format),
-            .output_format = Spec.fromSdl(output_format),
+            Spec.fromSdl(input_format),
+            Spec.fromSdl(output_format),
         };
     }
 
@@ -1598,7 +1598,7 @@ pub const Stream = packed struct {
                 additional_amount_c: c_int,
                 total_amount_c: c_int,
             ) callconv(.c) void {
-                callback.?(@alignCast(@ptrCast(user_data_c)), .{ .value = stream_c.? }, @intCast(additional_amount_c), @intCast(total_amount_c));
+                callback.?(@ptrCast(@alignCast(user_data_c)), .{ .value = stream_c.? }, @intCast(additional_amount_c), @intCast(total_amount_c));
             }
         };
         _ = c.SDL_SetAudioStreamGetCallback(
@@ -1747,7 +1747,7 @@ pub const Stream = packed struct {
                 additional_amount_c: c_int,
                 total_amount_c: c_int,
             ) callconv(.c) void {
-                callback.?(@alignCast(@ptrCast(user_data_c)), .{ .value = stream_c.? }, @intCast(additional_amount_c), @intCast(total_amount_c));
+                callback.?(@ptrCast(@alignCast(user_data_c)), .{ .value = stream_c.? }, @intCast(additional_amount_c), @intCast(total_amount_c));
             }
         };
         _ = c.SDL_SetAudioStreamPutCallback(
@@ -2050,7 +2050,7 @@ pub fn getRecordingDevices() ![]Device {
 /// * `path`: The file path for the WAV to open.
 ///
 /// ## Return Value
-/// Returns the audio spec of the WAV along with its data.
+/// Returns the audio spec of the WAV along with its data in that order.
 /// The `data` must be freed with `free()`.
 ///
 /// ## Remarks
@@ -2064,7 +2064,7 @@ pub fn getRecordingDevices() ![]Device {
 /// This function is available since SDL 3.2.0.
 pub fn loadWav(
     path: [:0]const u8,
-) !struct { spec: Spec, data: []u8 } {
+) !struct { Spec, []u8 } {
     var data: [*c]u8 = undefined;
     var len: u32 = undefined;
     var spec: c.SDL_AudioSpec = undefined;
@@ -2075,8 +2075,8 @@ pub fn loadWav(
         &len,
     ));
     return .{
-        .spec = Spec.fromSdl(spec),
-        .data = data[0..@intCast(len)],
+        Spec.fromSdl(spec),
+        data[0..@intCast(len)],
     };
 }
 
@@ -2087,7 +2087,7 @@ pub fn loadWav(
 /// * `close_io`: Will close the `src` before returning, even on error.
 ///
 /// ## Return Value
-/// Returns the audio spec of the WAV along with its data.
+/// Returns the audio spec of the WAV along with its data in that order.
 /// The `data` must be freed with `free()`.
 ///
 /// ## Remarks
@@ -2121,7 +2121,7 @@ pub fn loadWav(
 pub fn loadWavIo(
     src: io_stream.Stream,
     close_io: bool,
-) !struct { spec: Spec, data: []u8 } {
+) !struct { Spec, []u8 } {
     var data: [*c]u8 = undefined;
     var len: u32 = undefined;
     var spec: c.SDL_AudioSpec = undefined;
@@ -2133,8 +2133,8 @@ pub fn loadWavIo(
         &len,
     ));
     return .{
-        .spec = Spec.fromSdl(spec),
-        .data = data[0..@intCast(len)],
+        Spec.fromSdl(spec),
+        data[0..@intCast(len)],
     };
 }
 

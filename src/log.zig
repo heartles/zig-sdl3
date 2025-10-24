@@ -414,22 +414,22 @@ pub fn getDefaultLogOutputFunction() LogOutputFunctionC {
 /// Get the current log output function.
 ///
 /// ## Return Value
-/// * `callback`: A `log.LogOutputFunction` filled in with the current log `callback`.
-/// * `user_data`: A pointer filled in with the pointer that is passed to `callback`.
+/// * `[0]`: A `log.LogOutputFunction` filled in with the current log `callback`.
+/// * `[1]`: A pointer filled in with the pointer that is passed to `callback`.
 ///
 /// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getLogOutputFunction() struct { callback: LogOutputFunctionC, user_data: ?*anyopaque } {
+pub fn getLogOutputFunction() struct { LogOutputFunctionC, ?*anyopaque } {
     var callback: c.SDL_LogOutputFunction = undefined;
     var user_data: ?*anyopaque = undefined;
     c.SDL_GetLogOutputFunction(
         &callback,
         &user_data,
     );
-    return .{ .callback = callback.?, .user_data = user_data };
+    return .{ callback.?, user_data };
 }
 
 /// Log a message with `log.Category.application` and `log.Priority.info`.
@@ -566,8 +566,8 @@ fn testGetLastMessage(data: TestLogCallbackData) []const u8 {
 test "Log" {
     std.testing.refAllDeclsRecursive(@This());
 
-    const backup = getLogOutputFunction();
-    try std.testing.expectEqual(getDefaultLogOutputFunction(), backup.callback);
+    const backup_callback, const backup_user_data = getLogOutputFunction();
+    try std.testing.expectEqual(getDefaultLogOutputFunction(), backup_callback);
 
     var log_arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer log_arena.deinit();
@@ -640,5 +640,5 @@ test "Log" {
 
     resetAllPriorities();
     try std.testing.expectEqual(.info, Category.application.getPriority());
-    setLogOutputFunction(anyopaque, null, backup.user_data);
+    setLogOutputFunction(anyopaque, null, backup_user_data);
 }

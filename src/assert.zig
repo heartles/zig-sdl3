@@ -131,10 +131,10 @@ pub fn getDefaultHandler() HandlerC {
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getHandler() struct { handler: HandlerC, user_data: ?*anyopaque } {
+pub fn getHandler() struct { HandlerC, ?*anyopaque } {
     var user_data: ?*anyopaque = undefined;
     const handler = c.SDL_GetAssertionHandler(&user_data).?;
-    return .{ .handler = handler, .user_data = user_data };
+    return .{ handler, user_data };
 }
 
 /// Get a list of all assertion failures.
@@ -241,7 +241,7 @@ pub fn setHandler(
 ) void {
     const Cb = struct {
         pub fn run(assert_data_c: [*c]const c.SDL_AssertData, user_data_c: ?*anyopaque) callconv(.c) c.SDL_AssertState {
-            return @intFromEnum(handler.?(@bitCast(assert_data_c.*), @alignCast(@ptrCast(user_data_c))));
+            return @intFromEnum(handler.?(@bitCast(assert_data_c.*), @ptrCast(@alignCast(user_data_c))));
         }
     };
     c.SDL_SetAssertionHandler(if (handler != null) Cb.run else null, user_data);
@@ -260,9 +260,9 @@ fn testAssertCallback(assert_data: AssertData, user_data: ?*TestHandlerCallbackD
 test "Assert" {
     std.testing.refAllDeclsRecursive(@This());
 
-    const handler = getHandler();
-    try std.testing.expectEqual(getDefaultHandler(), handler.handler);
-    try std.testing.expectEqual(null, handler.user_data);
+    const handler, const user_data = getHandler();
+    try std.testing.expectEqual(getDefaultHandler(), handler);
+    try std.testing.expectEqual(null, user_data);
 
     var data = TestHandlerCallbackData{};
     setHandler(TestHandlerCallbackData, testAssertCallback, &data);
@@ -288,5 +288,5 @@ test "Assert" {
     try std.testing.expectEqual(null, getReport());
 
     setHandler(void, null, null);
-    try std.testing.expectEqual(getDefaultHandler(), getHandler().handler);
+    try std.testing.expectEqual(getDefaultHandler(), getHandler()[0]);
 }

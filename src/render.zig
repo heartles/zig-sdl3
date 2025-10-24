@@ -483,6 +483,7 @@ pub const Renderer = struct {
     ///
     /// ## Return Value
     /// The current output size in pixels of a rendering context.
+    /// Width and height are provided in that order.
     ///
     /// ## Remarks
     /// If a rendering target is active, this will return the size of the rendering target in pixels, otherwise return the value of `render.Renderer.getOutputSize()`.
@@ -496,7 +497,7 @@ pub const Renderer = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getCurrentOutputSize(
         self: Renderer,
-    ) !struct { width: usize, height: usize } {
+    ) !struct { usize, usize } {
         var w: c_int = undefined;
         var h: c_int = undefined;
         const ret = c.SDL_GetCurrentRenderOutputSize(
@@ -505,7 +506,7 @@ pub const Renderer = struct {
             &h,
         );
         try errors.wrapCallBool(ret);
-        return .{ .width = @intCast(w), .height = @intCast(h) };
+        return .{ @intCast(w), @intCast(h) };
     }
 
     // getDefaultTextureScalMode() is in SDL 3.4.0.
@@ -603,7 +604,7 @@ pub const Renderer = struct {
     /// * `self`: The rendering context.
     ///
     /// ## Return Value
-    /// The logical presentation output size along with the presentation mode used.
+    /// The width and height with the logical presentation output size along with the presentation mode used in that order.
     ///
     /// ## Remarks
     /// This function gets the width and height of the logical rendering output, or the output size in pixels if a logical resolution is not enabled.
@@ -618,7 +619,7 @@ pub const Renderer = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getLogicalPresentation(
         self: Renderer,
-    ) !struct { width: usize, height: usize, presentation_mode: ?LogicalPresentation } {
+    ) !struct { usize, usize, ?LogicalPresentation } {
         var w: c_int = undefined;
         var h: c_int = undefined;
         var presentation_mode: c.SDL_RendererLogicalPresentation = undefined;
@@ -629,7 +630,7 @@ pub const Renderer = struct {
             &presentation_mode,
         );
         try errors.wrapCallBool(ret);
-        return .{ .width = @intCast(w), .height = @intCast(h), .presentation_mode = LogicalPresentation.fromSdl(presentation_mode) };
+        return .{ @intCast(w), @intCast(h), LogicalPresentation.fromSdl(presentation_mode) };
     }
 
     /// Get the final presentation rectangle for rendering.
@@ -742,6 +743,7 @@ pub const Renderer = struct {
     ///
     /// ## Return Value
     /// The output size in pixels.
+    /// The width and height are provided in that order.
     ///
     /// ## Remarks
     /// This returns the true output size in pixels, ignoring any render targets or logical size and presentation.
@@ -755,7 +757,7 @@ pub const Renderer = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getOutputSize(
         self: Renderer,
-    ) !struct { width: usize, height: usize } {
+    ) !struct { usize, usize } {
         var w: c_int = undefined;
         var h: c_int = undefined;
         const ret = c.SDL_GetRenderOutputSize(
@@ -764,7 +766,7 @@ pub const Renderer = struct {
             &h,
         );
         try errors.wrapCallBool(ret);
-        return .{ .width = @intCast(w), .height = @intCast(h) };
+        return .{ @intCast(w), @intCast(h) };
     }
 
     /// Get the properties associated with a renderer.
@@ -825,7 +827,7 @@ pub const Renderer = struct {
     /// * `self`: The rendering context.
     ///
     /// ## Return Value
-    /// The scaling factors.
+    /// The scaling factors for x and y in that order.
     ///
     /// ## Remarks
     /// Each render target has its own scale.
@@ -838,7 +840,7 @@ pub const Renderer = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getScale(
         self: Renderer,
-    ) !struct { x: f32, y: f32 } {
+    ) !struct { f32, f32 } {
         var x: f32 = undefined;
         var y: f32 = undefined;
         const ret = c.SDL_GetRenderScale(
@@ -847,7 +849,7 @@ pub const Renderer = struct {
             &y,
         );
         try errors.wrapCallBool(ret);
-        return .{ .x = x, .y = y };
+        return .{ x, y };
     }
 
     /// Get the current render target.
@@ -1067,7 +1069,7 @@ pub const Renderer = struct {
         width: usize,
         height: usize,
         window_flags: video.Window.Flags,
-    ) !struct { window: video.Window, renderer: Renderer } {
+    ) !struct { video.Window, Renderer } {
         var window: ?*c.SDL_Window = undefined;
         var renderer: ?*c.SDL_Renderer = undefined;
         const ret = c.SDL_CreateWindowAndRenderer(
@@ -1079,7 +1081,7 @@ pub const Renderer = struct {
             &renderer,
         );
         try errors.wrapCallBool(ret);
-        return .{ .window = .{ .value = window.? }, .renderer = .{ .value = renderer.? } };
+        return .{ .{ .value = window.? }, .{ .value = renderer.? } };
     }
 
     /// Update the screen with any rendering performed since the previous call.
@@ -2693,7 +2695,7 @@ pub const Texture = struct {
     /// * `self`: The texture to query.
     ///
     /// ## Return Value
-    /// The width and height of the texture in pixels.
+    /// The width and height of the texture in pixels in that order.
     ///
     /// ## Thread Safety
     /// This function should only be called on the main thread.
@@ -2702,7 +2704,7 @@ pub const Texture = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getSize(
         self: Texture,
-    ) !struct { width: f32, height: f32 } {
+    ) !struct { f32, f32 } {
         var w: f32 = undefined;
         var h: f32 = undefined;
         const ret = c.SDL_GetTextureSize(
@@ -2711,7 +2713,7 @@ pub const Texture = struct {
             &h,
         );
         try errors.wrapCallBool(ret);
-        return .{ .width = w, .height = h };
+        return .{ w, h };
     }
 
     /// Get the width of the texture.
@@ -2840,7 +2842,7 @@ pub const Texture = struct {
     pub fn lock(
         self: Texture,
         update_area: ?rect.IRect,
-    ) !struct { pixels: [*]u8, pitch: usize } {
+    ) !struct { [*]u8, usize } {
         const update_area_sdl: c.SDL_Rect = if (update_area) |val| val.toSdl() else undefined;
         var data: ?*anyopaque = undefined;
         var pitch: c_int = undefined;
@@ -2851,7 +2853,7 @@ pub const Texture = struct {
             &pitch,
         );
         try errors.wrapCallBool(ret);
-        return .{ .pixels = @ptrCast(@alignCast(data)), .pitch = @intCast(pitch) };
+        return .{ @ptrCast(@alignCast(data)), @intCast(pitch) };
     }
 
     /// Lock a portion of the texture for write-only pixel access, and expose it as a SDL surface.

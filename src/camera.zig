@@ -157,7 +157,7 @@ pub const Camera = packed struct {
     ///
     /// ## Return Value
     /// Returns a new frame of video on success, `null` if none is currently available.
-    /// Also returns frame's timestamp, or `null` on error.
+    /// Also returns frame's timestamp in nanoseconds, or `null` on error.
     ///
     /// ## Remarks
     /// The frame is a memory pointer to the image data, whose size and format are given by the spec requested when opening the device.
@@ -185,13 +185,13 @@ pub const Camera = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn acquireFrame(
         self: Camera,
-    ) struct { frame: ?surface.Surface, timestamp_nanoseconds: ?u64 } {
+    ) struct { ?surface.Surface, ?u64 } {
         var timestamp_nanoseconds: u64 = undefined;
         const ret = c.SDL_AcquireCameraFrame(
             self.value,
             &timestamp_nanoseconds,
         );
-        return .{ .frame = if (ret != null) .{ .value = ret } else null, .timestamp_nanoseconds = if (timestamp_nanoseconds == 0) null else timestamp_nanoseconds };
+        return .{ if (ret != null) .{ .value = ret } else null, if (timestamp_nanoseconds == 0) null else timestamp_nanoseconds };
     }
 
     /// Use this function to shut down camera processing and close the camera device.
@@ -571,8 +571,8 @@ test "Camera" {
                 _ = cam.getFormat() catch {};
                 _ = cam.getPermissionState();
                 _ = cam.getProperties() catch {};
-                const frame = cam.acquireFrame();
-                if (frame.frame) |frame_surface| cam.releaseFrame(frame_surface);
+                const frame, _ = cam.acquireFrame();
+                if (frame) |frame_surface| cam.releaseFrame(frame_surface);
             }
         }
     }

@@ -582,7 +582,7 @@ pub const Joystick = struct {
     /// * `index`: The ball index to query; ball indices start at index `0`.
     ///
     /// ## Return Value
-    /// Returns the difference in x and y position since the last poll.
+    /// Returns the difference in x and y position since the last poll in that order.
     ///
     /// ## Remarks
     /// Trackballs can only return relative motion since the last call to this, these motion deltas are returned.
@@ -594,12 +594,12 @@ pub const Joystick = struct {
     pub fn getBall(
         self: Joystick,
         index: usize,
-    ) !struct { dx: isize, dy: isize } {
+    ) !struct { isize, isize } {
         var dx: c_int = undefined;
         var dy: c_int = undefined;
         const ret = c.SDL_GetJoystickBall(self.value, @intCast(index), &dx, &dy);
         try errors.wrapCallBool(ret);
-        return .{ .dx = @intCast(dx), .dy = @intCast(dy) };
+        return .{ @intCast(dx), @intCast(dy) };
     }
 
     /// Get the current state of a button on a joystick.
@@ -890,13 +890,13 @@ pub const Joystick = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getPowerInfo(
         self: Joystick,
-    ) !struct { state: power.PowerState, percent: ?u7 } {
+    ) !struct { power.PowerState, ?u7 } {
         var percent: c_int = undefined;
         const ret = c.SDL_GetJoystickPowerInfo(
             self.value,
             &percent,
         );
-        return .{ .state = @enumFromInt(try errors.wrapCall(c_int, ret, c.SDL_POWERSTATE_ERROR)), .percent = if (percent == -1) null else @intCast(percent) };
+        return .{ @enumFromInt(try errors.wrapCall(c_int, ret, c.SDL_POWERSTATE_ERROR)), if (percent == -1) null else @intCast(percent) };
     }
 
     /// Get the USB product ID of an opened joystick, if available.
@@ -1473,32 +1473,32 @@ pub fn VirtualJoystickDescription(comptime UserData: type) type {
         pub fn toSdl(self: VirtualJoystickDescription(UserData)) c.SDL_VirtualJoystickDesc {
             const Cb = struct {
                 fn update(user_data_c: ?*anyopaque) callconv(.c) void {
-                    self.update.?(@alignCast(@ptrCast(user_data_c)));
+                    self.update.?(@ptrCast(@alignCast(user_data_c)));
                 }
                 fn set_player_index(user_data_c: ?*anyopaque, player_index: c_int) callconv(.c) void {
-                    self.set_player_index.?(@alignCast(@ptrCast(user_data_c)), @intCast(player_index));
+                    self.set_player_index.?(@ptrCast(@alignCast(user_data_c)), @intCast(player_index));
                 }
                 fn rumble(user_data_c: ?*anyopaque, low_frequency_rumble: u16, high_frequency_rumble: u16) callconv(.c) bool {
-                    return self.rumble.?(@alignCast(@ptrCast(user_data_c)), low_frequency_rumble, high_frequency_rumble);
+                    return self.rumble.?(@ptrCast(@alignCast(user_data_c)), low_frequency_rumble, high_frequency_rumble);
                 }
                 fn rumble_triggers(user_data_c: ?*anyopaque, left_rumble: u16, right_rumble: u16) callconv(.c) bool {
-                    self.rumble_triggers.?(@alignCast(@ptrCast(user_data_c)), left_rumble, right_rumble) catch return false;
+                    self.rumble_triggers.?(@ptrCast(@alignCast(user_data_c)), left_rumble, right_rumble) catch return false;
                     return true;
                 }
                 fn set_led(user_data_c: ?*anyopaque, red: u8, green: u8, blue: u8) callconv(.c) bool {
-                    self.set_led.?(@alignCast(@ptrCast(user_data_c)), red, green, blue) catch return false;
+                    self.set_led.?(@ptrCast(@alignCast(user_data_c)), red, green, blue) catch return false;
                     return true;
                 }
                 fn send_effect(user_data_c: ?*anyopaque, data: ?*const anyopaque, size: c_int) callconv(.c) bool {
-                    self.send_effect.?(@alignCast(@ptrCast(user_data_c)), @as([*]const u8, @alignCast(@ptrCast(data)))[0..@intCast(size)]) catch return false;
+                    self.send_effect.?(@ptrCast(@alignCast(user_data_c)), @as([*]const u8, @ptrCast(@alignCast(data)))[0..@intCast(size)]) catch return false;
                     return true;
                 }
                 fn set_sensors_enabled(user_data_c: ?*anyopaque, enabled: bool) callconv(.c) bool {
-                    self.set_sensors_enabled.?(@alignCast(@ptrCast(user_data_c)), enabled) catch return false;
+                    self.set_sensors_enabled.?(@ptrCast(@alignCast(user_data_c)), enabled) catch return false;
                     return true;
                 }
                 fn cleanup(user_data_c: ?*anyopaque) callconv(.c) void {
-                    self.cleanup.?(@alignCast(@ptrCast(user_data_c)));
+                    self.cleanup.?(@ptrCast(@alignCast(user_data_c)));
                 }
             };
             return .{

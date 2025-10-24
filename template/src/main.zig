@@ -64,22 +64,22 @@ pub fn init(
     errdefer allocator.destroy(state);
 
     // Setup initial data.
-    const window_renderer = try sdl3.render.Renderer.initWithWindow(
+    const window, const renderer = try sdl3.render.Renderer.initWithWindow(
         "Hello SDL3",
         window_width,
         window_height,
         .{},
     );
-    errdefer window_renderer.renderer.deinit();
-    errdefer window_renderer.window.deinit();
+    errdefer renderer.deinit();
+    errdefer window.deinit();
     var frame_capper = sdl3.extras.FramerateCapper(f32){ .mode = .{ .unlimited = {} } };
-    window_renderer.renderer.setVSync(.{ .on_each_num_refresh = 1 }) catch {
+    renderer.setVSync(.{ .on_each_num_refresh = 1 }) catch {
 
         // We don't want to run at unlimited FPS, cap frame rate to the default FPS if vsync is not available so we don't burn CPU time.
         frame_capper.mode = .{ .limited = fps };
     };
     const tree_tex = try sdl3.image.loadTextureIo(
-        window_renderer.renderer,
+        renderer,
         try sdl3.io_stream.Stream.initFromConstMem(my_image),
         true,
     );
@@ -92,8 +92,8 @@ pub fn init(
     // Set app state.
     state.* = .{
         .frame_capper = frame_capper,
-        .window = window_renderer.window,
-        .renderer = window_renderer.renderer,
+        .window = window,
+        .renderer = renderer,
         .tree_tex = tree_tex,
     };
     app_state.* = state;

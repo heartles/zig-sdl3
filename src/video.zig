@@ -704,13 +704,13 @@ pub const egl = struct {
     ) void {
         const Cb = struct {
             pub fn platform_attrib(user_data_c: ?*anyopaque) callconv(.c) [*c]EglAttrib {
-                return platform_attrib_callback.?(@alignCast(@ptrCast(user_data_c)));
+                return platform_attrib_callback.?(@ptrCast(@alignCast(user_data_c)));
             }
             pub fn surface_attrib(user_data_c: ?*anyopaque, display_c: c.SDL_EGLDisplay, config_c: c.SDL_EGLConfig) callconv(.c) [*c]EglInt {
-                return surface_attrib_callback.?(@alignCast(@ptrCast(user_data_c)), display_c, config_c);
+                return surface_attrib_callback.?(@ptrCast(@alignCast(user_data_c)), display_c, config_c);
             }
             pub fn context_attrib(user_data_c: ?*anyopaque, display_c: c.SDL_EGLDisplay, config_c: c.SDL_EGLConfig) callconv(.c) [*c]EglInt {
-                return surface_attrib_callback.?(@alignCast(@ptrCast(user_data_c)), display_c, config_c);
+                return surface_attrib_callback.?(@ptrCast(@alignCast(user_data_c)), display_c, config_c);
             }
         };
         c.SDL_EGL_SetAttributeCallbacks(
@@ -1672,7 +1672,7 @@ pub const Window = packed struct {
         /// Convert from an SDL value.
         pub fn fromSdl(value: properties.Group) Properties {
             return .{
-                .shape = if (value.get(c.SDL_PROP_WINDOW_SHAPE_POINTER)) |val| .{ .value = @alignCast(@ptrCast(val.pointer.?)) } else null,
+                .shape = if (value.get(c.SDL_PROP_WINDOW_SHAPE_POINTER)) |val| .{ .value = @ptrCast(@alignCast(val.pointer.?)) } else null,
                 .hdr_enabled = if (value.get(c.SDL_PROP_WINDOW_HDR_ENABLED_BOOLEAN)) |val| val.boolean else null,
                 .sdr_white_level = if (value.get(c.SDL_PROP_WINDOW_SDR_WHITE_LEVEL_FLOAT)) |val| val.float else null,
                 .hdr_headroom = if (value.get(c.SDL_PROP_WINDOW_HDR_HEADROOM_FLOAT)) |val| val.float else null,
@@ -1896,12 +1896,12 @@ pub const Window = packed struct {
     /// TODO: ADD EXAMPLE!!!
     pub fn initWithProperties(
         props: CreateProperties,
-    ) !struct { window: Window, properties: properties.Group } {
+    ) !struct { Window, properties.Group } {
         const group = try props.toProperties();
         errdefer group.deinit();
 
         const window = try errors.wrapCallNull(*c.SDL_Window, c.SDL_CreateWindowWithProperties(group.value));
-        return .{ .window = .{ .value = window }, .properties = group };
+        return .{ .{ .value = window }, group };
     }
 
     /// Destroy a window.
@@ -1991,7 +1991,7 @@ pub const Window = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getAspectRatio(
         self: Window,
-    ) !struct { min_aspect: f32, max_aspect: f32 } {
+    ) !struct { f32, f32 } {
         var min_aspect: f32 = undefined;
         var max_aspect: f32 = undefined;
         const ret = c.SDL_GetWindowAspectRatio(
@@ -2000,7 +2000,7 @@ pub const Window = packed struct {
             &max_aspect,
         );
         try errors.wrapCallBool(ret);
-        return .{ .min_aspect = min_aspect, .max_aspect = max_aspect };
+        return .{ min_aspect, max_aspect };
     }
 
     /// Get the size of a window's borders (decorations) around the client area.
@@ -2175,7 +2175,7 @@ pub const Window = packed struct {
         self: Window,
     ) ![]u8 {
         var size: usize = undefined;
-        const ret = @as([*]u8, @alignCast(@ptrCast(try errors.wrapCallNull(*anyopaque, c.SDL_GetWindowICCProfile(self.value, &size)))));
+        const ret = @as([*]u8, @ptrCast(@alignCast(try errors.wrapCallNull(*anyopaque, c.SDL_GetWindowICCProfile(self.value, &size)))));
         return ret[0..size];
     }
 
@@ -2224,7 +2224,7 @@ pub const Window = packed struct {
     /// * `self`: The window to query.
     ///
     /// ## Return Value
-    /// Returns the window's maximum size.
+    /// Returns the window's maximum size with width and height in that order.
     ///
     /// ## Thread Safety
     /// This function should only be called on the main thread.
@@ -2233,12 +2233,12 @@ pub const Window = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getMaximumSize(
         self: Window,
-    ) !struct { width: usize, height: usize } {
+    ) !struct { usize, usize } {
         var width: c_int = undefined;
         var height: c_int = undefined;
         const ret = c.SDL_GetWindowMaximumSize(self.value, &width, &height);
         try errors.wrapCallBool(ret);
-        return .{ .width = @intCast(width), .height = @intCast(height) };
+        return .{ @intCast(width), @intCast(height) };
     }
 
     /// Get the minimum size of a window's client area.
@@ -2247,7 +2247,7 @@ pub const Window = packed struct {
     /// * `self`: The window to query.
     ///
     /// ## Return Value
-    /// Returns the window's maximum size.
+    /// Returns the window's maximum size, the width and height in order.
     ///
     /// ## Thread Safety
     /// This function should only be called on the main thread.
@@ -2256,12 +2256,12 @@ pub const Window = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getMinimumSize(
         self: Window,
-    ) !struct { width: usize, height: usize } {
+    ) !struct { usize, usize } {
         var width: c_int = undefined;
         var height: c_int = undefined;
         const ret = c.SDL_GetWindowMinimumSize(self.value, &width, &height);
         try errors.wrapCallBool(ret);
-        return .{ .width = @intCast(width), .height = @intCast(height) };
+        return .{ @intCast(width), @intCast(height) };
     }
 
     /// Get a window's mouse grab mode.
@@ -2408,12 +2408,12 @@ pub const Window = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getPosition(
         self: Window,
-    ) !struct { x: isize, y: isize } {
+    ) !struct { isize, isize } {
         var x: c_int = undefined;
         var y: c_int = undefined;
         const ret = c.SDL_GetWindowPosition(self.value, &x, &y);
         try errors.wrapCallBool(ret);
-        return .{ .x = @intCast(x), .y = @intCast(y) };
+        return .{ @intCast(x), @intCast(y) };
     }
 
     /// Get the properties associated with a window.
@@ -2468,7 +2468,7 @@ pub const Window = packed struct {
     /// * `self`: The window to query.
     ///
     /// ## Return Value
-    /// Returns the size of the window's client area.
+    /// Returns the size of the window's client area, width and height in order.
     ///
     /// ## Remarks
     /// The window pixel size may differ from its window coordinate size if the window is on a high pixel density display.
@@ -2481,12 +2481,12 @@ pub const Window = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getSize(
         self: Window,
-    ) !struct { width: usize, height: usize } {
+    ) !struct { usize, usize } {
         var width: c_int = undefined;
         var height: c_int = undefined;
         const ret = c.SDL_GetWindowSize(self.value, &width, &height);
         try errors.wrapCallBool(ret);
-        return .{ .width = @intCast(width), .height = @intCast(height) };
+        return .{ @intCast(width), @intCast(height) };
     }
 
     /// Get the size of the window's client area in pixels.
@@ -2495,7 +2495,7 @@ pub const Window = packed struct {
     /// * `self`: The window to query.
     ///
     /// ## Return Value
-    /// Returns the size of the window's client area in pixels.
+    /// Returns the size of the window's client area in pixels, the width and height in order.
     ///
     /// ## Remarks
     /// The window pixel size may differ from its window coordinate size if the window is on a high pixel density display.
@@ -2508,12 +2508,12 @@ pub const Window = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getSizeInPixels(
         self: Window,
-    ) !struct { width: usize, height: usize } {
+    ) !struct { usize, usize } {
         var width: c_int = undefined;
         var height: c_int = undefined;
         const ret = c.SDL_GetWindowSizeInPixels(self.value, &width, &height);
         try errors.wrapCallBool(ret);
-        return .{ .width = @intCast(width), .height = @intCast(height) };
+        return .{ @intCast(width), @intCast(height) };
     }
 
     /// Get the SDL surface associated with the window.
@@ -2913,7 +2913,7 @@ pub const Window = packed struct {
     ) !void {
         const Cb = struct {
             pub fn run(win_c: ?*c.SDL_Window, area_c: [*c]const c.SDL_Point, user_data_c: ?*anyopaque) callconv(.c) c.SDL_HitTestResult {
-                return @intFromEnum(callback.?(.{ .value = win_c.? }, rect.IPoint.fromSdl(area_c), @alignCast(@ptrCast(user_data_c))));
+                return @intFromEnum(callback.?(.{ .value = win_c.? }, rect.IPoint.fromSdl(area_c), @ptrCast(@alignCast(user_data_c))));
             }
         };
         return errors.wrapCallBool(c.SDL_SetWindowHitTest(self.value, if (callback != null) Cb.run else null, user_data));

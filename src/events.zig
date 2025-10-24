@@ -164,8 +164,8 @@ pub const Group = enum {
         event_type: Type,
     ) bool {
         const raw: c.SDL_EventType = @intFromEnum(event_type);
-        const minmax = self.minMax();
-        return raw >= minmax.min and raw <= minmax.max;
+        const min, const max = self.minMax();
+        return raw >= min and raw <= max;
     }
 
     /// Create an iterator for every type in the group.
@@ -184,10 +184,10 @@ pub const Group = enum {
     pub fn iterator(
         self: Group,
     ) Iterator {
-        const minmax = self.minMax();
+        const min, const max = self.minMax();
         return Iterator{
-            .curr = minmax.min,
-            .max = minmax.max,
+            .curr = min,
+            .max = max,
         };
     }
 
@@ -206,27 +206,27 @@ pub const Group = enum {
     /// Provided by zig-sdl3.
     pub fn minMax(
         self: Group,
-    ) struct { min: c.SDL_EventType, max: c.SDL_EventType } {
+    ) struct { c.SDL_EventType, c.SDL_EventType } {
         return switch (self) {
-            .all => .{ .min = 0, .max = std.math.maxInt(c.SDL_EventType) },
-            .application => .{ .min = c.SDL_EVENT_QUIT, .max = c.SDL_EVENT_SYSTEM_THEME_CHANGED },
-            .display => .{ .min = c.SDL_EVENT_DISPLAY_FIRST, .max = c.SDL_EVENT_DISPLAY_LAST },
-            .window => .{ .min = c.SDL_EVENT_WINDOW_FIRST, .max = c.SDL_EVENT_WINDOW_LAST },
-            .keyboard => .{ .min = c.SDL_EVENT_KEY_DOWN, .max = c.SDL_EVENT_TEXT_EDITING_CANDIDATES },
-            .mouse => .{ .min = c.SDL_EVENT_MOUSE_MOTION, .max = c.SDL_EVENT_MOUSE_REMOVED },
-            .joystick => .{ .min = c.SDL_EVENT_JOYSTICK_AXIS_MOTION, .max = c.SDL_EVENT_JOYSTICK_UPDATE_COMPLETE },
-            .gamepad => .{ .min = c.SDL_EVENT_GAMEPAD_AXIS_MOTION, .max = c.SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED },
-            .touch => .{ .min = c.SDL_EVENT_FINGER_DOWN, .max = c.SDL_EVENT_FINGER_CANCELED },
-            .clipboard => .{ .min = c.SDL_EVENT_CLIPBOARD_UPDATE, .max = c.SDL_EVENT_CLIPBOARD_UPDATE },
-            .drag_and_drop => .{ .min = c.SDL_EVENT_DROP_FILE, .max = c.SDL_EVENT_DROP_POSITION },
-            .audio => .{ .min = c.SDL_EVENT_AUDIO_DEVICE_ADDED, .max = c.SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED },
-            .sensor => .{ .min = c.SDL_EVENT_SENSOR_UPDATE, .max = c.SDL_EVENT_SENSOR_UPDATE },
-            .pen => .{ .min = c.SDL_EVENT_PEN_PROXIMITY_IN, .max = c.SDL_EVENT_PEN_AXIS },
-            .camera => .{ .min = c.SDL_EVENT_CAMERA_DEVICE_ADDED, .max = c.SDL_EVENT_CAMERA_DEVICE_DENIED },
-            .render => .{ .min = c.SDL_EVENT_RENDER_TARGETS_RESET, .max = c.SDL_EVENT_RENDER_DEVICE_LOST },
-            .reserved => .{ .min = c.SDL_EVENT_PRIVATE0, .max = c.SDL_EVENT_PRIVATE3 },
-            .internal => .{ .min = c.SDL_EVENT_POLL_SENTINEL, .max = c.SDL_EVENT_POLL_SENTINEL },
-            .user => .{ .min = c.SDL_EVENT_USER, .max = c.SDL_EVENT_LAST },
+            .all => .{ 0, std.math.maxInt(c.SDL_EventType) },
+            .application => .{ c.SDL_EVENT_QUIT, c.SDL_EVENT_SYSTEM_THEME_CHANGED },
+            .display => .{ c.SDL_EVENT_DISPLAY_FIRST, c.SDL_EVENT_DISPLAY_LAST },
+            .window => .{ c.SDL_EVENT_WINDOW_FIRST, c.SDL_EVENT_WINDOW_LAST },
+            .keyboard => .{ c.SDL_EVENT_KEY_DOWN, c.SDL_EVENT_TEXT_EDITING_CANDIDATES },
+            .mouse => .{ c.SDL_EVENT_MOUSE_MOTION, c.SDL_EVENT_MOUSE_REMOVED },
+            .joystick => .{ c.SDL_EVENT_JOYSTICK_AXIS_MOTION, c.SDL_EVENT_JOYSTICK_UPDATE_COMPLETE },
+            .gamepad => .{ c.SDL_EVENT_GAMEPAD_AXIS_MOTION, c.SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED },
+            .touch => .{ c.SDL_EVENT_FINGER_DOWN, c.SDL_EVENT_FINGER_CANCELED },
+            .clipboard => .{ c.SDL_EVENT_CLIPBOARD_UPDATE, c.SDL_EVENT_CLIPBOARD_UPDATE },
+            .drag_and_drop => .{ c.SDL_EVENT_DROP_FILE, c.SDL_EVENT_DROP_POSITION },
+            .audio => .{ c.SDL_EVENT_AUDIO_DEVICE_ADDED, c.SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED },
+            .sensor => .{ c.SDL_EVENT_SENSOR_UPDATE, c.SDL_EVENT_SENSOR_UPDATE },
+            .pen => .{ c.SDL_EVENT_PEN_PROXIMITY_IN, c.SDL_EVENT_PEN_AXIS },
+            .camera => .{ c.SDL_EVENT_CAMERA_DEVICE_ADDED, c.SDL_EVENT_CAMERA_DEVICE_DENIED },
+            .render => .{ c.SDL_EVENT_RENDER_TARGETS_RESET, c.SDL_EVENT_RENDER_DEVICE_LOST },
+            .reserved => .{ c.SDL_EVENT_PRIVATE0, c.SDL_EVENT_PRIVATE3 },
+            .internal => .{ c.SDL_EVENT_POLL_SENTINEL, c.SDL_EVENT_POLL_SENTINEL },
+            .user => .{ c.SDL_EVENT_USER, c.SDL_EVENT_LAST },
         };
     }
 };
@@ -2831,7 +2831,7 @@ pub fn addWatch(
     const Cb = struct {
         pub fn run(user_data_c: ?*anyopaque, event_c: [*c]c.SDL_Event) callconv(.c) bool {
             var event = Event.fromSdl(event_c.*);
-            const ret = event_filter(@alignCast(@ptrCast(user_data_c)), &event);
+            const ret = event_filter(@ptrCast(@alignCast(user_data_c)), &event);
             event_c.* = event.toSdl();
             return ret;
         }
@@ -2900,7 +2900,7 @@ pub fn filter(
     const Cb = struct {
         pub fn run(user_data_c: ?*anyopaque, event_c: [*c]c.SDL_Event) callconv(.c) bool {
             var event = Event.fromSdl(event_c.*);
-            const ret = event_filter(@alignCast(@ptrCast(user_data_c)), &event);
+            const ret = event_filter(@ptrCast(@alignCast(user_data_c)), &event);
             event_c.* = event.toSdl();
             return ret;
         }
@@ -2958,8 +2958,8 @@ pub fn flush(
 pub fn flushGroup(
     group: Group,
 ) void {
-    const minmax = group.minMax();
-    c.SDL_FlushEvents(minmax.min, minmax.max);
+    const min, const max = group.minMax();
+    c.SDL_FlushEvents(min, max);
 }
 
 /// Query the current event filter.
@@ -2975,13 +2975,13 @@ pub fn flushGroup(
 /// It is safe to call this function from any thread.
 ///
 /// This function is available since SDL 3.2.0.
-pub fn getFilter() ?struct { event_filter: FilterC, user_data: ?*anyopaque } {
+pub fn getFilter() ?struct { FilterC, ?*anyopaque } {
     var event_filter: c.SDL_FunctionPointer = undefined;
     var user_data: ?*anyopaque = undefined;
     const ret = c.SDL_GetEventFilter(&event_filter, &user_data);
     if (!ret)
         return null;
-    return .{ .event_filter = @ptrCast(event_filter), .user_data = user_data };
+    return .{ @ptrCast(event_filter), user_data };
 }
 
 /// Check for the existence of a certain event type in the event queue.
@@ -3022,8 +3022,8 @@ pub fn has(
 pub fn hasGroup(
     group: Group,
 ) bool {
-    const minmax = group.minMax();
-    return c.SDL_HasEvents(minmax.min, minmax.max);
+    const min, const max = group.minMax();
+    return c.SDL_HasEvents(min, max);
 }
 
 /// Check the event queue for messages and optionally return them.
@@ -3050,9 +3050,9 @@ pub fn peep(
     action: Action,
     group: Group,
 ) !usize {
-    const minmax = group.minMax();
+    const min, const max = group.minMax();
     const raw: [*]c.SDL_Event = @ptrCast(events.ptr); // Hacky! We ensure in unit tests our enum is the same size so we can do this, then convert in-place.
-    const ret = c.SDL_PeepEvents(raw, @intCast(events.len), @intFromEnum(action), minmax.min, minmax.max);
+    const ret = c.SDL_PeepEvents(raw, @intCast(events.len), @intFromEnum(action), min, max);
     for (0..@intCast(ret)) |ind| {
         _ = Event.fromSdlInPlace(&raw[ind]);
     }
@@ -3083,8 +3083,8 @@ pub fn peepSize(
     action: Action,
     group: Group,
 ) !usize {
-    const minmax = group.minMax();
-    const ret = c.SDL_PeepEvents(null, @intCast(num_events), @intFromEnum(action), minmax.min, minmax.max);
+    const min, const max = group.minMax();
+    const ret = c.SDL_PeepEvents(null, @intCast(num_events), @intFromEnum(action), min, max);
     return @intCast(try errors.wrapCall(c_int, ret, -1));
 }
 
@@ -3276,7 +3276,7 @@ pub fn setFilter(
     const Cb = struct {
         pub fn run(user_data_c: ?*anyopaque, event_c: [*c]c.SDL_Event) callconv(.c) bool {
             var event = Event.fromSdl(event_c.*);
-            const ret = event_filter(@alignCast(@ptrCast(user_data_c)), &event);
+            const ret = event_filter(@ptrCast(@alignCast(user_data_c)), &event);
             event_c.* = event.toSdl();
             return ret;
         }
@@ -3422,7 +3422,7 @@ test "Events" {
 
     filter(void, dummyFilter, null);
     const curr_filter = setFilter(void, dummyFilter, null);
-    try std.testing.expectEqual(@intFromPtr(curr_filter), @intFromPtr(getFilter().?.event_filter));
+    try std.testing.expectEqual(@intFromPtr(curr_filter), @intFromPtr(getFilter().?[0]));
 
     const watch = try addWatch(void, dummyFilter, null);
     removeWatch(watch, null);

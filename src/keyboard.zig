@@ -311,7 +311,7 @@ pub fn getModState() keycode.KeyModifier {
 ///
 /// ## Return Value
 /// Get the scancode corresponding to the given key code according to the current keyboard layout.
-/// The `key_mod` is the first one that matches.
+/// The key modifier is the first one that matches.
 ///
 /// ## Remarks
 /// Note that there may be multiple scancode+modifier states that can generate this keycode, this will just return the first one found.
@@ -323,7 +323,7 @@ pub fn getModState() keycode.KeyModifier {
 /// This function is available since SDL 3.2.0.
 pub fn getScancodeFromKey(
     key: keycode.Keycode,
-) ?struct { code: ?scancode.Scancode, key_mod: keycode.KeyModifier } {
+) ?struct { ?scancode.Scancode, keycode.KeyModifier } {
     var key_mod: c.SDL_Keymod = undefined;
     const ret = c.SDL_GetScancodeFromKey(
         key.toSdl(),
@@ -331,7 +331,7 @@ pub fn getScancodeFromKey(
     );
     if (ret == c.SDL_SCANCODE_UNKNOWN)
         return null;
-    return .{ .code = scancode.Scancode.fromSdl(@intCast(ret)), .key_mod = keycode.KeyModifier.fromSdl(key_mod) };
+    return .{ scancode.Scancode.fromSdl(@intCast(ret)), keycode.KeyModifier.fromSdl(key_mod) };
 }
 
 /// Get a scancode from a human-readable name.
@@ -438,7 +438,7 @@ pub fn getState() []const bool {
 /// This function is available since SDL 3.2.0.
 pub fn getTextInputArea(
     window: video.Window,
-) !struct { input_area: rect.IRect, cursor_offset: i32 } {
+) !struct { rect.IRect, i32 } {
     var input_area: c.SDL_Rect = undefined;
     var cursor_offset: c_int = undefined;
     const ret = c.SDL_GetTextInputArea(
@@ -447,7 +447,7 @@ pub fn getTextInputArea(
         &cursor_offset,
     );
     try errors.wrapCallBool(ret);
-    return .{ .input_area = rect.IRect.fromSdl(input_area), .cursor_offset = @intCast(cursor_offset) };
+    return .{ rect.IRect.fromSdl(input_area), @intCast(cursor_offset) };
 }
 
 /// Return whether a keyboard is currently connected.

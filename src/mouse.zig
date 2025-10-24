@@ -469,7 +469,7 @@ pub fn getFocus() ?video.Window {
 /// Query the platform for the asynchronous mouse button state and the desktop-relative platform-cursor position.
 ///
 /// ## Return Value
-/// Returns the mouse button state, as well as the x and y position from the desktop's top-left corner.
+/// Returns the mouse button state, as well as the x and y position from the desktop's top-left corner in that order.
 ///
 /// ## Remarks
 /// This function immediately queries the platform for the most recent asynchronous state,
@@ -487,14 +487,14 @@ pub fn getFocus() ?video.Window {
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getGlobalState() struct { flags: ButtonFlags, x: f32, y: f32 } {
+pub fn getGlobalState() struct { ButtonFlags, f32, f32 } {
     var x: f32 = undefined;
     var y: f32 = undefined;
     const flags = c.SDL_GetGlobalMouseState(&x, &y);
     return .{
-        .flags = ButtonFlags.fromSdl(flags),
-        .x = x,
-        .y = y,
+        ButtonFlags.fromSdl(flags),
+        x,
+        y,
     };
 }
 
@@ -523,7 +523,7 @@ pub fn getMice() ![]Id {
 /// Query SDL's cache for the synchronous mouse button state and accumulated mouse delta since last call.
 ///
 /// ## Return Value
-/// Returns the mouse button state, as well as the x and y delta accumulated from the last call.
+/// Returns the mouse button state, as well as the x and y delta accumulated from the last call in that order.
 ///
 /// ## Remarks
 /// This function returns the cached synchronous state as SDL understands it from the last pump of the event queue.
@@ -542,21 +542,21 @@ pub fn getMice() ![]Id {
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getRelativeState() struct { flags: ButtonFlags, x: f32, y: f32 } {
+pub fn getRelativeState() struct { ButtonFlags, f32, f32 } {
     var x: f32 = undefined;
     var y: f32 = undefined;
     const flags = c.SDL_GetRelativeMouseState(&x, &y);
     return .{
-        .flags = ButtonFlags.fromSdl(flags),
-        .x = x,
-        .y = y,
+        ButtonFlags.fromSdl(flags),
+        x,
+        y,
     };
 }
 
 /// Query SDL's cache for the synchronous mouse button state and the window-relative SDL-cursor position.
 ///
 /// ## Return Value
-/// Returns the mouse button state, as well as the x and y position from the desktop's top-left corner.
+/// Returns the mouse button state, as well as the x and y position from the desktop's top-left corner in that order.
 ///
 /// ## Remarks
 /// This function returns the cached synchronous state as SDL understands it from the last pump of the event queue.
@@ -571,14 +571,14 @@ pub fn getRelativeState() struct { flags: ButtonFlags, x: f32, y: f32 } {
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getState() struct { flags: ButtonFlags, x: f32, y: f32 } {
+pub fn getState() struct { ButtonFlags, f32, f32 } {
     var x: f32 = undefined;
     var y: f32 = undefined;
     const flags = c.SDL_GetMouseState(&x, &y);
     return .{
-        .flags = ButtonFlags.fromSdl(flags),
-        .x = x,
-        .y = y,
+        ButtonFlags.fromSdl(flags),
+        x,
+        y,
     };
 }
 
